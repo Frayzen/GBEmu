@@ -3,7 +3,10 @@
 
 #include <stddef.h>
 
-int parse(const char* path);
+//return 0 on success
+int parse();
+//return 0 on success
+int load_rom(const char *path);
 
 
 #endif /* !PARSER_H */

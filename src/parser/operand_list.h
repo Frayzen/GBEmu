@@ -22,24 +22,12 @@
   X(sp, 0)           \
   X(sp_plus_imm8, 1)
 
-enum operand_type {
+typedef enum operand_type {
 #define X(op, ...) op,
   OPERAND_LIST
 #undef X
-};
+} operand_type;
 
-int operand_byte_consumption(enum operand_type op) {
-  switch (op) {
-#define X(op, amount, ...) \
-  case op:                 \
-    return amount;
-    OPERAND_LIST
-#undef X
-  default:
-    return 0;
-  }
-}
-
-
+int operand_byte_consumption(enum operand_type op);
 
 #endif /* !OPERAND_LIST_H */

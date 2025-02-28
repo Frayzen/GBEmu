@@ -1,4 +1,6 @@
+#include "ncurses/ncurses.h"
 #include "parser/parser.h"
+#include "ui/ui.h"
 #include "utils.h"
 #define _POSIX_C_SOURCE 200809L
 
@@ -15,10 +17,19 @@ int main(int argc, char *argv[]) {
   }
   int first_arg = optind;
 
-  if (argc - first_arg == 0)
-  {
+  if (argc - first_arg == 0) {
     printerr("Please provide a ROM\n");
     return 1;
   }
-  return parse(argv[first_arg]);
+
+  setup_ui();
+
+  load_rom(argv[first_arg]);
+
+  int running = 1;
+  while (1) {
+    running = parse();
+    getch(); // Waiting for a key to be pressed
+    display();
+  }
 }

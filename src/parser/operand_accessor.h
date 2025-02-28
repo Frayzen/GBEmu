@@ -1,37 +1,15 @@
 #ifndef OPERAND_ACCESSOR_H
 #define OPERAND_ACCESSOR_H
 
-#include "hard/regs.h"
-#include "utils.h"
-#include <cstddef>
-#include <stdlib.h>
+#include "parser/operand_list.h"
 #include <stdint.h>
 
-uint8_t *r8_accessor(char val) {
-  switch (val) {
+typedef union operand_value {
+  uint8_t u8;
+  uint8_t* pu8;
+  uint16_t* pu16;
+} operand_value;
 
-  case 0:
-    return &regs.b;
-  case 1:
-    return &regs.c;
-  case 2:
-    return &regs.d;
-  case 3:
-    return &regs.e;
-  case 4:
-    return &regs.h;
-  case 5:
-    return &regs.l;
-  case 6:
-    return &(*regs.h);
-  case 7:
-    return &regs.a;
-  case 8:
-    return &regs.a;
-  default:
-    printerr("Error while trying to access r8 register %d\n", val);
-    return NULL;
-  }
-}
+operand_value operand_accessor(operand_type type, uint8_t hex, uint8_t mask);
 
 #endif /* !OPERAND_ACCESSOR_H */
