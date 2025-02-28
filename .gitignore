@@ -1,6 +1,13 @@
 **
 !src
+!src/*/
+
+!roms/
+!roms/*
+
 !.gitignore
-!Makefile
+!CMakeLists.txt
 !*.h
 !*.c
+!*.yml
+!*.clang-format
