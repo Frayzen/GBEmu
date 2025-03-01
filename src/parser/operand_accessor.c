@@ -2,6 +2,7 @@
 #include "hard/regs.h"
 #include "parser/operand_list.h"
 #include "ram/ram.h"
+#include "ui/ui.h"
 #include "utils.h"
 #include <assert.h>
 #include <stddef.h>
@@ -57,7 +58,7 @@ uint16_t *r16_accessor(uint8_t val, int flags) {
     return &regs16->sp;
   }
   default:
-    printerr("Error while trying to access r8 register %d\n", val);
+    printerr("Error while trying to access r16 register %d\n", val);
     return NULL;
   }
 }
@@ -74,7 +75,7 @@ uint8_t cond_accessor(uint8_t val) {
   case 3:
     return regs8->f & FLAG_C_MSK;
   default:
-    printerr("Error while trying to access r8 register %d\n", val);
+    printerr("Error while trying to access cond register %d\n", val);
     exit(1);
     return 0;
   }
@@ -83,7 +84,7 @@ uint8_t cond_accessor(uint8_t val) {
 uint8_t *static_accessor(uint8_t val) {
   static uint8_t static_accessors[2] = {};
   static uint8_t last_static_index = 0;
-  uint8_t* cur = static_accessors + last_static_index;
+  uint8_t *cur = static_accessors + last_static_index;
   last_static_index = (last_static_index + 1) % 2;
   *cur = val;
   return cur;
@@ -114,10 +115,11 @@ operand_value non_immediate_accessor(operand_type type, uint8_t hex, uint8_t mas
   uint8_t offsethex = 0;
   if (mask != 0) {
     offsethex = hex;
-    while (mask & 1) {
-      offsethex <<= 1;
-      mask <<= 1;
+    while (!(mask & 0b1)) {
+      mask >>= 1;
+      offsethex >>= 1;
     }
+    offsethex &= mask;
   } else if (type == a)
     offsethex = 7; // value of a 8bits register
   else if (type == brak_c)

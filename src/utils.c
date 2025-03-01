@@ -1,4 +1,5 @@
 #include "utils.h"
+#include "ui/ui.h"
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -21,10 +22,11 @@ void printBits(uint8_t byte) {
 #ifndef NDEBUG
   for (int i = 7; i >= 0; i--) {
     if (byte & (1 << i))
-      putc('1', stdout);
+      uilog("1");
     else
-      putc('0', stdout);
+      uilog("0");
   }
+  uilog("\n");
 #endif
 }
 
