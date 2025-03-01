@@ -1,15 +1,15 @@
 #ifndef OPERAND_ACCESSOR_H
 #define OPERAND_ACCESSOR_H
 
-#include "parser/operand_list.h"
+#include "parser/operators_list.h"
 #include <stdint.h>
 
 typedef union operand_value {
-  uint8_t u8;
-  uint8_t* pu8;
-  uint16_t* pu16;
+  uint8_t* u8;
+  uint16_t* u16;
+  void* empty;
 } operand_value;
 
-operand_value operand_accessor(operand_type type, uint8_t hex, uint8_t mask);
+void operands_accessor(operator* op, operand_value *first, operand_value *second);
 
 #endif /* !OPERAND_ACCESSOR_H */

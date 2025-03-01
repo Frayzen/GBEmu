@@ -1,5 +1,6 @@
 #include "utils.h"
 #include <stdarg.h>
+#include <stdint.h>
 #include <stdio.h>
 
 void printerr(const char *fmt, ...) {
@@ -25,4 +26,12 @@ void printBits(uint8_t byte) {
       putc('0', stdout);
   }
 #endif
+}
+
+uint16_t combine_u16(uint8_t x, uint8_t y)
+{
+  uint16_t r = x;
+  r <<= 8;
+  r += y;
+  return r;
 }

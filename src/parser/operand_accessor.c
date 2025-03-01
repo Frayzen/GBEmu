@@ -80,12 +80,13 @@ uint8_t cond_accessor(uint8_t val) {
   }
 }
 
-uint8_t bit3_accessor(uint8_t val) {
-  return val;
-}
-
-uint8_t tgt3_accessor(uint8_t val) {
-  return val * 8;
+uint8_t *static_accessor(uint8_t val) {
+  static uint8_t static_accessors[2] = {};
+  static uint8_t last_static_index = 0;
+  uint8_t* cur = static_accessors + last_static_index;
+  last_static_index = (last_static_index + 1) % 2;
+  *cur = val;
+  return cur;
 }
 
 #define R16_ACC_FLG_NONE 0
@@ -108,7 +109,7 @@ int get_r16_accessor_mask(operand_type type) {
   }
 }
 
-operand_value operand_accessor(operand_type type, uint8_t hex, uint8_t mask) {
+operand_value non_immediate_accessor(operand_type type, uint8_t hex, uint8_t mask) {
   union operand_value v;
   uint8_t offsethex = 0;
   if (mask != 0) {
@@ -140,13 +141,55 @@ operand_value operand_accessor(operand_type type, uint8_t hex, uint8_t mask) {
     return (operand_value)r16_accessor(offsethex, get_r16_accessor_mask(type));
 
   case b3:
-    return (operand_value)bit3_accessor(offsethex);
+    return (operand_value)static_accessor(offsethex);
   case tgt3:
-    return (operand_value)tgt3_accessor(offsethex);
+    return (operand_value)static_accessor(offsethex * 8);
   case cond:
-    return (operand_value)cond_accessor(offsethex);
+    return (operand_value)static_accessor(cond_accessor(offsethex));
   default:
     printerr("Error, weird operand involved : %d\n", type);
     exit(1);
   }
+}
+
+operand_value immediate_accessor(operand_type type) {
+  uint8_t *address = ram + (regs8->pc++);
+  switch (type) {
+  case imm8:
+    return (operand_value)address;
+  case imm16:
+    regs8->pc++;
+    return (operand_value)address;
+  case brak_imm16:
+    regs8->pc++;
+    return (operand_value)get_ram_16ptr(*((uint16_t *)address));
+  case brak_imm8:
+    return (operand_value)get_ram_8ptr(*address);
+  case sp_plus_imm8:
+  default:
+    printerr("Error, weird immediate operand involved : %d\n", type);
+    exit(1);
+  }
+}
+
+operand_value operand_accessor(operand_type type, uint8_t hex, uint8_t msk) {
+  if (type == no_oprd)
+    return (operand_value)NULL;
+  switch (type) {
+  case imm8:
+  case imm16:
+  case brak_imm16:
+  case brak_imm8:
+  case sp_plus_imm8:
+    return (operand_value)immediate_accessor(type);
+  default:
+    break;
+  }
+  // Non immediate fallback
+  return non_immediate_accessor(type, hex, msk);
+}
+
+void operands_accessor(operator* op, operand_value *first, operand_value *second) {
+  *first = operand_accessor(op->op1_type, op->value, op->op1_mask);
+  *second = operand_accessor(op->op2_type, op->value, op->op2_mask);
 }

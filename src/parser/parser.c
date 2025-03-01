@@ -1,5 +1,6 @@
 #include "parser.h"
 #include "hard/regs.h"
+#include "parser/operand_accessor.h"
 #include "parser/operators_list.h"
 #include "ram/ram.h"
 #include "ui/ui.h"
@@ -47,9 +48,8 @@ int parse() {
   prev_cb = 0;
 
   int byte_consumption = operator_byte_consumption(op);
-  static uint8_t immediate_operands[4];
-  for (int i = 0; i < byte_consumption; i++) {
-    immediate_operands[i] = ram[regs16->pc++];
-  }
+
+  static operand_value operand1, operand2;
+  operands_accessor(op, &operand1, &operand2);
   return 0;
 }
