@@ -10,6 +10,6 @@ typedef union operand_value {
   void* empty;
 } operand_value;
 
-void operands_accessor(operator* op, operand_value *first, operand_value *second);
+void operands_accessor(uint8_t cur_byte, operator* op, operand_value *first, operand_value *second);
 
 #endif /* !OPERAND_ACCESSOR_H */

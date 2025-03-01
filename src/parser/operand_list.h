@@ -29,5 +29,6 @@ typedef enum operand_type {
 } operand_type;
 
 int operand_byte_consumption(enum operand_type op);
+int is_u16(operand_type op);
 
 #endif /* !OPERAND_LIST_H */

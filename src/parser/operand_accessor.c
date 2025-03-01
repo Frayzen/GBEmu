@@ -55,7 +55,7 @@ uint16_t *r16_accessor(uint8_t val, int flags) {
       return &regs16->af;
     else if (flags == R16_ACC_FLG_MEM)
       return &regs16->hl;
-    return &regs16->sp;
+    return &(regs16->sp);
   }
   default:
     printerr("Error while trying to access r16 register %d\n", val);
@@ -191,7 +191,8 @@ operand_value operand_accessor(operand_type type, uint8_t hex, uint8_t msk) {
   return non_immediate_accessor(type, hex, msk);
 }
 
-void operands_accessor(operator* op, operand_value *first, operand_value *second) {
-  *first = operand_accessor(op->op1_type, op->value, op->op1_mask);
-  *second = operand_accessor(op->op2_type, op->value, op->op2_mask);
+void operands_accessor(uint8_t cur_byte, operator* op, operand_value *first, operand_value *second) {
+
+  *first = operand_accessor(op->op1_type, cur_byte, op->op1_mask);
+  *second = operand_accessor(op->op2_type, cur_byte, op->op2_mask);
 }

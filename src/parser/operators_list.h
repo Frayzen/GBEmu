@@ -72,7 +72,7 @@ enum operator_type {
   /* DONE */                                                   \
   X(nop, no_oprd, no_oprd, 0b00000000, MSK_NONE, MSK_NONE, 0)  \
   /* DONE */                                                   \
-  X(ld, r16, brak_imm16, 0b00000001, MSK_54, MSK_NONE, 0)      \
+  X(ld, r16, imm16, 0b00000001, MSK_54, MSK_NONE, 0)      \
   X(ld, brak_r16mem, a, 0b00000010, MSK_54, MSK_NONE, 0)       \
   X(ld, a, brak_r16mem, 0b00001010, MSK_NONE, MSK_54, 0)       \
   X(ld, brak_imm16, sp, 0b00001000, MSK_NONE, MSK_NONE, 0)     \

@@ -28,8 +28,8 @@ int main(int argc, char *argv[]) {
 
   int running = 1;
   while (1) {
-    running = parse();
     getch(); // Waiting for a key to be pressed
+    running = parse();
     display();
   }
 }
