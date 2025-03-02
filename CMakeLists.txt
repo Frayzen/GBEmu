@@ -9,3 +9,4 @@ file(GLOB_RECURSE sources RELATIVE ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/s
 add_executable(GBEmu ${sources})
 target_link_libraries(GBEmu ${NCURSES_LIBRARIES})
 target_include_directories(GBEmu PRIVATE ${PROJECT_SOURCE_DIR}/src ${NCURSES_INCLUDE_DIRS})
+

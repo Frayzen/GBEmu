@@ -6,6 +6,9 @@
 #include <stdlib.h>
 #include <time.h>
 
+#define BOX_H_CHAR '|'
+#define BOX_V_CHAR '-'
+
 static WINDOW *mainwin, *regwin, *screenwin, *logwin, *logpad;
 static int width, height = 0;
 
@@ -54,7 +57,7 @@ void uilog(const char *fmt, ...) {
 }
 
 void refresh_log() {
-  box(logwin, '|', '-');
+  box(logwin, BOX_H_CHAR, BOX_V_CHAR);
   mvwprintw(logwin, 0, 1, "[LOG]");
   wrefresh(logwin);
   int x, y, dx, dy, curx, cury;
@@ -66,18 +69,19 @@ void refresh_log() {
 }
 
 void refresh_reg() {
-  box(regwin, '|', '-');
+  box(regwin, BOX_H_CHAR, BOX_V_CHAR);
   mvwprintw(regwin, 0, 1, "[REG]");
-  mvwprintw(regwin,1,1, "AF: %02x", regs16->af);
-  mvwprintw(regwin,2,1, "BC: %02x", regs16->bc);
-  mvwprintw(regwin,3,1, "DE: %02x", regs16->de);
-  mvwprintw(regwin,4,1, "HL: %02x", regs16->hl);
-  mvwprintw(regwin,5,1, "SP: %02x", regs16->sp);
-  mvwprintw(regwin,6,1, "PC: %02x", regs16->pc);
+  mvwprintw(regwin,1,1, "AF: %04x", regs16->af);
+  mvwprintw(regwin,2,1, "BC: %04x", regs16->bc);
+  mvwprintw(regwin,3,1, "DE: %04x", regs16->de);
+  mvwprintw(regwin,4,1, "HL: %04x", regs16->hl);
+  mvwprintw(regwin,5,1, "SP: %04x", regs16->sp);
+  mvwprintw(regwin,6,1, "PC: %04x", regs16->pc);
   wrefresh(regwin);
 }
 
 void display() {
+  wclear(regwin);
   refresh();
   refresh_log();
   refresh_reg();

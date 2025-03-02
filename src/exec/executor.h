@@ -4,6 +4,6 @@
 #include "parser/operand_accessor.h"
 #include "parser/operators_list.h"
 
-void execute_operator(operator* op, operand_value *v1, operand_value *v2);
+void execute_operator(operator* op, operand *v1, operand *v2);
 
 #endif /* !EXECUTOR_H */

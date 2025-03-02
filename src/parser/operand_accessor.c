@@ -2,7 +2,6 @@
 #include "hard/regs.h"
 #include "parser/operand_list.h"
 #include "ram/ram.h"
-#include "ui/ui.h"
 #include "utils.h"
 #include <assert.h>
 #include <stddef.h>
@@ -10,28 +9,40 @@
 #include <stdlib.h>
 
 // returns the pointer to the data pointed by the operand
-uint8_t *r8_accessor(uint8_t val) {
+operand r8_accessor(uint8_t val) {
+  operand ret = {};
+  ret.size = size8;
   switch (val) {
   case 0:
-    return &regs8->b;
+    ret.val = &regs8->b;
+    break;
   case 1:
-    return &regs8->c;
+    ret.val = &regs8->c;
+    break;
   case 2:
-    return &regs8->d;
+    ret.val = &regs8->d;
+    break;
   case 3:
-    return &regs8->e;
+    ret.val = &regs8->e;
+    break;
   case 4:
-    return &regs8->h;
+    ret.val = &regs8->h;
+    break;
   case 5:
-    return &regs8->l;
+    ret.val = &regs8->l;
+    break;
   case 6:
-    return get_ram_8ptr(regs16->hl);
+    ret.val = &regs16->hl;
+    ret.deref = 1;
+    break;
   case 7:
-    return &regs8->a;
+    ret.val = &regs8->a;
+    break;
   default:
     printerr("Error while trying to access r8 register %d\n", val);
-    return NULL;
+    break;
   }
+  return ret;
 }
 
 #define R16_ACC_FLG_NONE 0
@@ -39,41 +50,52 @@ uint8_t *r8_accessor(uint8_t val) {
 #define R16_ACC_FLG_MEM 2
 
 // returns the pointer to the data pointed by the operand
-uint16_t *r16_accessor(uint8_t val, int flags) {
-
-  // TODO still need to handle hl+ and hl- (outside of this function)
+operand r16_accessor(uint8_t val, int flags, int deref) {
+  operand ret = {};
+  ret.size = size16;
+  ret.deref = deref;
 
   switch (val) {
   case 0:
-    return &regs16->bc;
+    ret.val = &regs16->bc;
+    break;
   case 1:
-    return &regs16->de;
+    ret.val = &regs16->de;
+    break;
   case 2:
-    return &regs16->hl;
+    ret.val = &regs16->hl;
+    break;
   case 3: {
     if (flags == R16_ACC_FLG_STK)
-      return &regs16->af;
+      ret.val = &regs16->af;
     else if (flags == R16_ACC_FLG_MEM)
-      return &regs16->hl;
-    return &(regs16->sp);
+      ret.val = &regs16->hl;
+    else
+      ret.val = &regs16->sp;
+    break;
   }
   default:
     printerr("Error while trying to access r16 register %d\n", val);
-    return NULL;
+    break;
   }
+  if (flags == R16_ACC_FLG_MEM)
+  {
+    ret.modify = (val == 3 ? -1 : (val == 2 ? 1 : 0));
+  }
+  return ret;
 }
 
 // returns the value of the condition associated
-uint8_t cond_accessor(uint8_t val) {
+uint8_t cond_value(uint8_t val) {
   switch (val) {
   case 0:
-    return !(regs8->f & FLAG_Z_MSK);
+    return !(regs8->f & Z_FLG);
   case 1:
-    return regs8->f & FLAG_Z_MSK;
+    return regs8->f & Z_FLG;
   case 2:
-    return !(regs8->f & FLAG_C_MSK);
+    return !(regs8->f & C_FLG);
   case 3:
-    return regs8->f & FLAG_C_MSK;
+    return regs8->f & C_FLG;
   default:
     printerr("Error while trying to access cond register %d\n", val);
     exit(1);
@@ -81,13 +103,18 @@ uint8_t cond_accessor(uint8_t val) {
   }
 }
 
-uint8_t *static_accessor(uint8_t val) {
+operand static_accessor(uint8_t val) {
   static uint8_t static_accessors[2] = {};
   static uint8_t last_static_index = 0;
+
   uint8_t *cur = static_accessors + last_static_index;
   last_static_index = (last_static_index + 1) % 2;
-  *cur = val;
-  return cur;
+
+  operand ret = {
+      .val = cur,
+      .size = size8,
+  };
+  return ret;
 }
 
 #define R16_ACC_FLG_NONE 0
@@ -110,8 +137,8 @@ int get_r16_accessor_mask(operand_type type) {
   }
 }
 
-operand_value non_immediate_accessor(operand_type type, uint8_t hex, uint8_t mask) {
-  union operand_value v;
+operand non_immediate_accessor(operand_type type, uint8_t hex, uint8_t mask) {
+  operand v;
   uint8_t offsethex = 0;
   if (mask != 0) {
     offsethex = hex;
@@ -133,57 +160,72 @@ operand_value non_immediate_accessor(operand_type type, uint8_t hex, uint8_t mas
   case a:
   case brak_c:
   case r8:
-    return (operand_value)r8_accessor(offsethex);
+    return r8_accessor(offsethex);
   case sp:
   case hl:
   case r16:
   case r16stk:
   case r16mem:
   case brak_r16mem:
-    return (operand_value)r16_accessor(offsethex, get_r16_accessor_mask(type));
-
+    return r16_accessor(offsethex, get_r16_accessor_mask(type), type == brak_r16mem);
   case b3:
-    return (operand_value)static_accessor(offsethex);
+    return static_accessor(offsethex);
   case tgt3:
-    return (operand_value)static_accessor(offsethex * 8);
+    return static_accessor(offsethex * 8);
   case cond:
-    return (operand_value)static_accessor(cond_accessor(offsethex));
+    return static_accessor(cond_value(offsethex));
   default:
     printerr("Error, weird operand involved : %d\n", type);
     exit(1);
+    break;
   }
 }
 
-operand_value immediate_accessor(operand_type type) {
-  uint8_t *address = ram + (regs8->pc++);
+operand immediate_accessor(operand_type type) {
+  operand ret = {};
+  ret.val = (ram + (regs8->pc++));
   switch (type) {
   case imm8:
-    return (operand_value)address;
+    ret.size = size8;
+    break;
   case imm16:
     regs8->pc++;
-    return (operand_value)address;
+    ret.size = size16;
+    break;
   case brak_imm16:
     regs8->pc++;
-    return (operand_value)get_ram_16ptr(*((uint16_t *)address));
+    ret.size = size16;
+    ret.deref = 1;
+    break;
   case brak_imm8:
-    return (operand_value)get_ram_8ptr(*address);
-  case sp_plus_imm8:
+    ret.size = size8;
+    ret.deref = 1;
+    break;
+  case sp_plus_imm8: {
+    ret.size = size16;
+    void *val = NULL;
+    val += regs16->sp + *(uint8_t *)ret.val;
+    ret.val = val;
+    break;
+  }
   default:
     printerr("Error, weird immediate operand involved : %d\n", type);
     exit(1);
+    break;
   }
+  return ret;
 }
 
-operand_value operand_accessor(operand_type type, uint8_t hex, uint8_t msk) {
+operand operand_accessor(operand_type type, uint8_t hex, uint8_t msk) {
   if (type == no_oprd)
-    return (operand_value)NULL;
+    return static_accessor(0);
   switch (type) {
   case imm8:
   case imm16:
   case brak_imm16:
   case brak_imm8:
   case sp_plus_imm8:
-    return (operand_value)immediate_accessor(type);
+    return immediate_accessor(type);
   default:
     break;
   }
@@ -191,8 +233,7 @@ operand_value operand_accessor(operand_type type, uint8_t hex, uint8_t msk) {
   return non_immediate_accessor(type, hex, msk);
 }
 
-void operands_accessor(uint8_t cur_byte, operator* op, operand_value *first, operand_value *second) {
-
+void operands_accessor(uint8_t cur_byte, operator* op, operand *first, operand *second) {
   *first = operand_accessor(op->op1_type, cur_byte, op->op1_mask);
   *second = operand_accessor(op->op2_type, cur_byte, op->op2_mask);
 }
